@@ -171,6 +171,18 @@
   #s0 .continue-btn:disabled{ opacity: 0.4; cursor: not-allowed; }
   .gate-input::placeholder{ color: var(--ink-soft); }
   .gate-error{ font-family: 'Outfit', sans-serif; font-size: 0.8rem; color: #ff8a8a; margin: 0.8rem 0 0; min-height: 1.1em; }
+  .gate-hint-toggle{
+    font-family: 'Outfit', sans-serif; font-size: 0.75rem; color: var(--ink-soft);
+    text-decoration: underline; text-underline-offset: 3px;
+    cursor: pointer; margin: 1.2rem 0 0;
+  }
+  .gate-hint-text{
+    display: none;
+    font-family: 'Lora', serif; font-style: italic; font-size: 0.88rem;
+    color: var(--accent); line-height: 1.6; margin: 0.8rem 0 0;
+    max-width: 260px; margin-left: auto; margin-right: auto;
+  }
+  .gate-hint-text.show{ display: block; }
 
   .continue-btn{
     background: none; border: none; border-bottom: 1px solid var(--ink);
@@ -335,6 +347,24 @@
   .choice-btn.primary:hover{ background: var(--ink); color: var(--paper); }
   .choice-btn.secondary{ border: 1px solid var(--line); color: var(--ink-soft); transition: left .25s ease, top .25s ease, background .2s ease, color .2s ease; }
   .final-reply{ font-family: 'Dancing Script', cursive; font-weight: 600; margin-top: 1.6rem; color: var(--accent); font-size: clamp(1.4rem, 5vw, 1.8rem); display: none; }
+
+  .chain-clue{ margin-bottom: 1.8rem; }
+  .clue-line{
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: clamp(1.1rem, 4vw, 1.3rem); line-height: 1.6;
+    color: var(--ink); margin: 0 0 0.9rem;
+    opacity: 0; transform: translateY(8px);
+    animation: lineIn .7s ease forwards;
+  }
+  .clue-heart{
+    font-family: 'Dancing Script', cursive; font-weight: 700;
+    font-size: clamp(2.6rem, 11vw, 3.4rem); color: var(--accent);
+    margin: 0.4rem 0 1rem; line-height: 1;
+    opacity: 0; transform: scale(0.6);
+    animation: heartIn .8s ease forwards;
+  }
+  @keyframes heartIn{ to{ opacity: 1; transform: scale(1); } }
+  .clue-continue{ opacity: 0; animation: lineIn .7s ease forwards; animation-delay: 10.2s; }
 
   .notepad-overlay{
     display: none;
@@ -556,6 +586,31 @@
   </div>
 </section>
 
+<!-- SCREEN 7 : ONE LAST THING -->
+<section id="s7" class="screen">
+  <div class="inner">
+    <p class="final-q">Then I have one last little thing to tell you…</p>
+    <button class="continue-btn" onclick="goTo('s8')">Continue</button>
+  </div>
+</section>
+
+<!-- SCREEN 8 : CHAIN CLUE -->
+<section id="s8" class="screen">
+  <div class="inner">
+    <div class="chain-clue">
+      <p class="clue-line" style="animation-delay:0.2s">Before you leave…</p>
+      <p class="clue-line" style="animation-delay:1.2s">I have one tiny gift for you. 🎁</p>
+      <p class="clue-line" style="animation-delay:2.4s">It may look simple, but it carries a little meaning from us.</p>
+      <p class="clue-line" style="animation-delay:3.8s">Look at the heart carefully…</p>
+      <p class="clue-heart" style="animation-delay:5s">&lt;3</p>
+      <p class="clue-line" style="animation-delay:6.2s">Three little layers, just like the three years we've shared. ❤️</p>
+      <p class="clue-line" style="animation-delay:7.6s">So this isn't just a heart…</p>
+      <p class="clue-line" style="animation-delay:8.8s">it's our 3rd year, wrapped into something you can keep with you.</p>
+    </div>
+    <button class="continue-btn clue-continue" onclick="goToNotepad()">Continue</button>
+  </div>
+</section>
+
 <!-- NOTEPAD POPUP -->
 <div class="notepad-overlay" id="notepadOverlay">
   <div class="notepad-card">
@@ -655,6 +710,9 @@
       err.textContent = '';
       const music = document.getElementById('bgMusic');
       music.play().catch(() => {});
+      const pop = document.getElementById('popSound');
+      pop.muted = true;
+      pop.play().then(() => { pop.pause(); pop.currentTime = 0; pop.muted = false; }).catch(() => { pop.muted = false; });
       goTo('s1');
     } else {
       setGateTries(tries + 1);
@@ -852,9 +910,11 @@
       method: 'POST',
       body: 'Rabiya said YES 💗 She just said yes to marrying you!'
     }).catch(() => {});
-    setTimeout(() => {
-      document.getElementById('notepadOverlay').classList.add('show');
-    }, 900);
+    setTimeout(() => { goTo('s7'); }, 1600);
+  }
+
+  function goToNotepad(){
+    document.getElementById('notepadOverlay').classList.add('show');
   }
 
   function sendNote(){
@@ -874,6 +934,23 @@
     setTimeout(() => {
       document.getElementById('notepadOverlay').classList.remove('show');
     }, 1400);
+    setTimeout(closeSite, 7000);
+  }
+
+  function closeSite(){
+    const music = document.getElementById('bgMusic');
+    let vol = music.volume;
+    const fade = setInterval(() => {
+      vol = Math.max(0, vol - 0.1);
+      music.volume = vol;
+      if(vol <= 0){ clearInterval(fade); music.pause(); }
+    }, 120);
+    const end = document.createElement('div');
+    end.style.cssText = 'position:fixed;inset:0;z-index:999;background:#0d0806;display:flex;align-items:center;justify-content:center;color:#e0b378;font-family:"Dancing Script",cursive;font-size:2rem;opacity:0;transition:opacity 1s ease;';
+    end.textContent = 'thank you 💗';
+    document.body.appendChild(end);
+    requestAnimationFrame(() => { end.style.opacity = '1'; });
+    setTimeout(() => { window.close(); }, 1600);
   }
 
   const noBtn = document.getElementById('noBtn');
